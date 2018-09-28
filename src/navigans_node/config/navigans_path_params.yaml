@@ -1,0 +1,17 @@
+# ---------------------------------------------------------
+# NaviGANs simple path follow control module:  parameters
+# ---------------------------------------------------------
+
+# --- Topic names
+/navigans_path/waypoint_topic:      '/move_base_simple/goal'
+/navigans_path/robot_control_topic: '/cmd_vel'
+
+
+# --- Generate messages upon receiving waypoint data
+/navigans_path/debug_level:         1
+
+# --- Names of frames pulled from the TF broadcaster
+/navigans_path/tf_parent_name:         'odom'
+/navigans_path/tf_child_name:          'base_link'
+
+/navigans_path/useGPU:                 1000

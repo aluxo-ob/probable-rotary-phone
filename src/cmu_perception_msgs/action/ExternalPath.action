@@ -1,0 +1,29 @@
+# The path to follow (a sequence of StampedPoses), the timestamps on
+#  each pose may or may not be used to choose vehicle speeds
+# (dependening on implementation)
+nav_msgs/Path desired_path
+
+# Optional path radius (require navigation to stay within this radius)
+float64[] radius
+
+# Use global planner within path-radius, note that the default
+# behavior is to skip global planning and only rely on local planning
+# to follow the desired_path
+bool global_planning
+
+# When using global planner, perform navigation as a sequence of
+# sub-goals
+bool global_planning_use_poses
+
+# Allow local planner to ignore obstacles
+bool ignore_obstacles
+---
+# Result state
+bool global_plan_infeasible
+bool failed_to_finish_desired_path
+bool violated_radius_constraint
+---
+# Feedback
+float64 percent_complete
+float64 expected_duration_to_complete
+nav_msgs/Path planned_path

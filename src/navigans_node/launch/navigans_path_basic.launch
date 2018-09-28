@@ -1,0 +1,7 @@
+<launch>
+  <node name="navigans_husky1_control" pkg="navigans_node" type="simpleActionServer.py" output="screen" clear_params="true">
+      <rosparam command="load" file="$(find navigans_node)/config/navigans_path_params.yaml" />
+      <param name="useGPU" value="1515" />
+
+  </node>
+</launch>
