@@ -26,7 +26,7 @@ uint8 classification
 float32[8] class_values
 uint8 CLASS_Unclassified=0
 uint8 CLASS_UnknownSmall=1
-uint8 CLASS_UnknowBig=2
+uint8 CLASS_UnknownBig=2
 uint8 CLASS_Pedestrian=3
 uint8 CLASS_Bike=4
 uint8 CLASS_Car=5
