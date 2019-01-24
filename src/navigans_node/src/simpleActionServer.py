@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+# Implementation of Action Server. 
+
 import roslib
 import rospy
 import actionlib
