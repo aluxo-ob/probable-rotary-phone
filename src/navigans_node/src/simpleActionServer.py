@@ -95,6 +95,7 @@ class NaviGANsServer:
 
 if __name__ == '__main__':
   rospy.init_node('navigans_control_server')
+  rospy.get_param('/navigans_path/tracking_topic')
 
   server = NaviGANsServer()
   rospy.Subscriber( '/forward_lidar_tracking_data', TrackedObjectSet, server.trackerMsgCallback )
