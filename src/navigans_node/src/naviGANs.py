@@ -208,10 +208,10 @@ class Ui_Form( object ):
             return
 
         print "Transform waypoint from /velodyne to /husky1/odom"
-        goalPoint = PointStamped()
+        goalPoint                 = PointStamped()
         goalPoint.header.frame_id = "velodyne"
-        goalPoint.header.stamp = rospy.Time(0)
-        goalPoint.point = data.pose.position
+        goalPoint.header.stamp    = rospy.Time(0)
+        goalPoint.point           = data.pose.position
         p = listener.transformPoint("/husky1/odom", goalPoint)
         
         #odomData = listener.transformPose('/husky1/odom', data)
