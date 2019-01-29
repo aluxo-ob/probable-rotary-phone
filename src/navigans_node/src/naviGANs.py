@@ -126,6 +126,7 @@ class Ui_Form( object ):
 
     def actionExecute( self ):
         print "actionExecute"    
+        """
         self.goal.desired_path.poses = []
         aPose = Pose()
         aPose.position.x = 0.0
@@ -149,7 +150,8 @@ class Ui_Form( object ):
         #goal.desired_path.poses.append( aPoseStamped )
         self.goal.desired_path.poses.append( aPoseStamped )
         print rospy.get_rostime()                
-        
+        """
+
         # Fill in the goal here
         self.client.send_goal( self.goal )
         if self.client.wait_for_result( rospy.Duration.from_sec(2.0) ):
@@ -168,6 +170,7 @@ class Ui_Form( object ):
         self.waypointCount = 0
         self.wpList = np.zeros( (1, 3) )
         self.updateLog( "Cleared list of waypoints" )
+        self.goal.desired_path.poses = []
  
     def deleteWP( self ):
         print "deleteWP"
@@ -175,6 +178,7 @@ class Ui_Form( object ):
         indexes = self.tableWPlist.selectionModel().selectedRows()
         for index in sorted(indexes ):
             print(' Row %d is selected' % index.row() )
+        self.goal.desired_path.poses = []
 
     def retranslateUi( self, Form ):
         Form.setWindowTitle(_translate("Form", "NaviGANs Client", None))
@@ -193,10 +197,12 @@ class Ui_Form( object ):
         self.goal.global_planning_use_poses = False
         self.goal.global_planning           = False
         self.goal.radius = []
+        self.goal.desired_path.poses = []
 
     def wayPointCallback( self, data ):
         print "Received waypoint from RViz"
         print("( %.3f, %.3f, %.3f )" % (data.pose.position.x, data.pose.position.y, data.pose.position.z))
+        print("[%.4f, %.4f, %.4f, %.4f]" % (data.pose.orientation.x, data.pose.orientation.y, data.pose.orientation.z, data.pose.orientation.w))
         
         try:
             # lookupTransform(target_frame, source_frame, time) -> (position, quaternion)
@@ -208,15 +214,39 @@ class Ui_Form( object ):
             return
 
         print "Transform waypoint from /velodyne to /husky1/odom"
+        """
         goalPoint                 = PointStamped()
         goalPoint.header.frame_id = "velodyne"
         goalPoint.header.stamp    = rospy.Time(0)
         goalPoint.point           = data.pose.position
         p = listener.transformPoint("/husky1/odom", goalPoint)
-        
-        #odomData = listener.transformPose('/husky1/odom', data)
+        """
+        data.header.stamp = rospy.Time(0)
+        odomData = listener.transformPose('/husky1/odom', data)
         #print("( %.3f, %.3f, %.3f )" % (data.pose.position.x, data.pose.position.y, data.pose.position.z))        
-
+        
+        p = odomData.pose.position
+        q = odomData.pose.orientation
+        """
+        aPose = Pose()
+        aPose.position.x = 0.0
+        aPose.position.y = 0.0
+        aPose.position.z = 0.0
+        aPose.orientation.w = -1.0
+        aPose.orientation.x = 0.0
+        aPose.orientation.y = 0.0
+        aPose.orientation.z = 0.0
+        """
+        aPoseStamped = PoseStamped()
+        aPoseStamped.pose = odomData.pose # aPose
+        
+        now = rospy.get_rostime()
+        rospy.loginfo("Current time %i %i", now.secs, now.nsecs)
+        
+        aPoseStamped.header.stamp.secs  = now.secs
+        aPoseStamped.header.stamp.nsecs = now.nsecs
+        aPoseStamped.header.frame_id = 'odom'
+        self.goal.desired_path.poses.append( aPoseStamped )
         """
         newData = np.array( [data.pose.position.x, data.pose.position.y, data.pose.position.z] )
         if self.waypointCount == 0:
@@ -234,19 +264,20 @@ class Ui_Form( object ):
         self.updateLog(" --> " + data)
         """
 
-        newData = np.array( [p.point.x, p.point.y, p.point.z] )
+        # Update waypoint table in GUI
+        newData = np.array( [p.x, p.y, p.z] )
         if self.waypointCount == 0:
             self.wpList = newData
         else:
             self.wpList = np.vstack( (self.wpList, newData) )
         self.tableWPlist.setRowCount( self.waypointCount + 1 )
         self.tableWPlist.setItem( self.waypointCount,0,QtGui.QTableWidgetItem(str( self.waypointCount + 1 )))
-        self.tableWPlist.setItem( self.waypointCount,1,QtGui.QTableWidgetItem(str( p.point.x )))
-        self.tableWPlist.setItem( self.waypointCount,2,QtGui.QTableWidgetItem(str( p.point.y )))
+        self.tableWPlist.setItem( self.waypointCount,1,QtGui.QTableWidgetItem(str( p.x )))
+        self.tableWPlist.setItem( self.waypointCount,2,QtGui.QTableWidgetItem(str( p.y )))
         self.tableWPlist.setRowHeight( self.waypointCount, 20 )
         self.tableWPlist.setColumnWidth( 0, 83 )
 
-        Data = "(%.3f, %.3f, %.3f)" % (p.point.x, p.point.y, p.point.z)
+        Data = "(%.3f, %.3f, %.3f)" % (p.x, p.y, p.z)
         self.updateLog(" --> " + Data)        
         
         self.waypointCount += 1
