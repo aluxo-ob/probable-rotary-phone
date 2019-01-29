@@ -1,0 +1,11 @@
+<launch>
+  <node name="navigans_husky1_control" pkg="navigans_node" type="simpleActionServer.py" output="screen" clear_params="true">
+      <rosparam command="load" file="$(find navigans_node)/config/navigans_path_params.yaml" />
+      <param name="useGPU" value="0" />
+
+  </node>
+
+  <node pkg="rosbag" type="play" name="player" output="screen" args="--clock  /home/lnavarro/rosBagFiles/husky1-dysctrack/2018-09-12-10-33-07.bag"/>
+  <node pkg="rviz" type="rviz" name="rviz" />
+
+</launch>
