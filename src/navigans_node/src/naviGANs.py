@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Form implementation generated from reading ui file 'naviGANs.ui'
@@ -10,6 +11,8 @@
 import roslib
 import rospy
 import actionlib
+import math
+import tf
 
 from cmu_perception_msgs.msg import ExternalPathAction, ExternalPathGoal
 from nav_msgs.msg import Path
@@ -24,7 +27,7 @@ try:
 except AttributeError:
     def _fromUtf8( s ):
         return s
-
+    
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
     def _translate( context, text, disambig ):
@@ -112,6 +115,10 @@ class Ui_Form( object ):
         QtCore.QObject.connect( self.pbDeleteWP, QtCore.SIGNAL( _fromUtf8("clicked()") ), self.deleteWP )
         QtCore.QMetaObject.connectSlotsByName( Form )
 
+        # Need to 'click' coordinate in sensor frame, but then these should be published in /odom frame
+        #self.euler_from_quaternion = tf.transformations.euler_from_quaternion
+        #self.listener = tf.TransformListener()
+
     def actionStop( self ):
         self.client.cancel_all_goals()
         print "actionStop"
@@ -189,23 +196,63 @@ class Ui_Form( object ):
 
     def wayPointCallback( self, data ):
         print "Received waypoint from RViz"
-        print("( %.3f, %.3f, %.3f )" % (data.point.x, data.point.y, data.point.z))
-        newData = np.array( [data.point.x, data.point.y, data.point.z] )
+        print("( %.3f, %.3f, %.3f )" % (data.pose.position.x, data.pose.position.y, data.pose.position.z))
+        
+        try:
+            # lookupTransform(target_frame, source_frame, time) -> (position, quaternion)
+            (trans,rot) = listener.lookupTransform('/husky1/odom', '/velodyne', rospy.Time())
+            msgTime = rospy.Time.from_sec( data.header.stamp.secs + data.header.stamp.nsecs/1e9 )
+            #(trans,rot) = listener.lookupTransform('/husky1/odom', '/velodyne', msgTime )
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            print "Exception thrown by TF"
+            return
+
+        print "Transform waypoint from /velodyne to /husky1/odom"
+        goalPoint                 = PointStamped()
+        goalPoint.header.frame_id = "velodyne"
+        goalPoint.header.stamp    = rospy.Time(0)
+        goalPoint.point           = data.pose.position
+        p = listener.transformPoint("/husky1/odom", goalPoint)
+        
+        #odomData = listener.transformPose('/husky1/odom', data)
+        #print("( %.3f, %.3f, %.3f )" % (data.pose.position.x, data.pose.position.y, data.pose.position.z))        
+
+        """
+        newData = np.array( [data.pose.position.x, data.pose.position.y, data.pose.position.z] )
         if self.waypointCount == 0:
             self.wpList = newData
         else:
             self.wpList = np.vstack( (self.wpList, newData) )
         self.tableWPlist.setRowCount( self.waypointCount + 1 )
         self.tableWPlist.setItem( self.waypointCount,0,QtGui.QTableWidgetItem(str( self.waypointCount + 1 )))
-        self.tableWPlist.setItem( self.waypointCount,1,QtGui.QTableWidgetItem(str( data.point.x )))
-        self.tableWPlist.setItem( self.waypointCount,2,QtGui.QTableWidgetItem(str( data.point.y )))
+        self.tableWPlist.setItem( self.waypointCount,1,QtGui.QTableWidgetItem(str( data.pose.position.x )))
+        self.tableWPlist.setItem( self.waypointCount,2,QtGui.QTableWidgetItem(str( data.pose.position.y )))
         self.tableWPlist.setRowHeight( self.waypointCount, 20 )
         self.tableWPlist.setColumnWidth( 0, 83 )
 
-        data = "(%.3f, %.3f, %.3f)" % (data.point.x, data.point.y, data.point.z)
+        data = "(%.3f, %.3f, %.3f)" % (data.pose.position.x, data.pose.position.y, data.pose.position.z)
         self.updateLog(" --> " + data)
+        """
+
+        newData = np.array( [p.point.x, p.point.y, p.point.z] )
+        if self.waypointCount == 0:
+            self.wpList = newData
+        else:
+            self.wpList = np.vstack( (self.wpList, newData) )
+        self.tableWPlist.setRowCount( self.waypointCount + 1 )
+        self.tableWPlist.setItem( self.waypointCount,0,QtGui.QTableWidgetItem(str( self.waypointCount + 1 )))
+        self.tableWPlist.setItem( self.waypointCount,1,QtGui.QTableWidgetItem(str( p.point.x )))
+        self.tableWPlist.setItem( self.waypointCount,2,QtGui.QTableWidgetItem(str( p.point.y )))
+        self.tableWPlist.setRowHeight( self.waypointCount, 20 )
+        self.tableWPlist.setColumnWidth( 0, 83 )
+
+        Data = "(%.3f, %.3f, %.3f)" % (p.point.x, p.point.y, p.point.z)
+        self.updateLog(" --> " + Data)        
+        
         self.waypointCount += 1
         #print("There are {} waypoint in {} array").format(self.waypointCount, self.wpList)
+
+
 
     def updateLog( self, message ):
         now = rospy.get_rostime()
@@ -224,7 +271,9 @@ if __name__ == "__main__":
     ui = Ui_Form()
     ui.setupUi( Form )
     ui.initializeAction()
-    rospy.Subscriber( '/clicked_point', PointStamped, ui.wayPointCallback )
+    rospy.Subscriber( '/move_base_simple/goal', PoseStamped, ui.wayPointCallback )
+
+    listener = tf.TransformListener()
 
     Form.show()
     sys.exit( app.exec_() )

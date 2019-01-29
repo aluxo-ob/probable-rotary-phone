@@ -4,4 +4,8 @@
       <param name="useGPU" value="1515" />
 
   </node>
+
+  <node pkg="rosbag" type="play" name="player" output="screen" args="--clock  /home/lnavarro/rosBagFiles/husky1-dysctrack/2018-09-12-10-33-07.bag"/>
+  <node pkg="rviz" type="rviz" name="rviz" />
+
 </launch>
