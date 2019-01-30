@@ -12,7 +12,8 @@
 /navigans_path/debug_level:         1
 
 # --- Names of frames pulled from the TF broadcaster
-/navigans_path/tf_parent_name:         '/husky1/odom'
-/navigans_path/tf_child_name:          '/velodyne'
+/navigans_path/target_frame:         '/husky1/odom'
+/navigans_path/source_frame:         '/husky1/base'
+/navigans_path/visual_frame:         '/velodyne'
 
 /navigans_path/useGPU:                 1000

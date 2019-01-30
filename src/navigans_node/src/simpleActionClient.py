@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+# This script is used to elicit a response from the Action Server.
+
 import roslib
 import rospy
 import actionlib
