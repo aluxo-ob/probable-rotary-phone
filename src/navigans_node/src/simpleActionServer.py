@@ -16,9 +16,9 @@ from cmu_perception_msgs.msg import ExternalPathAction, ExternalPathGoal, Extern
 # --------------------------------------------------------
 class TrackingController:
   def __init__(self):
-    self.K_x = 1.0
-    self.K_y = 1.0
-    self.K_theta = 1.0        
+    self.K_x = 0.5
+    self.K_y = 0.5
+    self.K_theta = 0.25        
     self.active = False
     print "[INFO] Tracking Controller has been instantiated."
 
@@ -35,6 +35,11 @@ class TrackingController:
     theta_e = theta_r - theta_c
     self.v = v_r * m.cos( theta_e ) + self.K_x * x_e
     self.w = w_r + v_r * ( self.K_y * y_e + self.K_theta * m.sin( theta_e ) )
+
+    # Terminate if close to goal
+    if m.fabs(error_x) <= 0.5 and m.fabs(error_y) <= 0.5 :
+      self.v = 0.0
+      self.w = 0.0
     
   # --------------------------------------------------------
   def yawFromQuat(self, quat):
@@ -64,7 +69,7 @@ class NaviGANsServer:
     self.someValue = rospy.get_param('~useGPU', -1)
     self.targetFrame = rospy.get_param('/navigans_path/target_frame')
     self.sourceFrame = rospy.get_param('/navigans_path/source_frame')
-    self.robotCmdTopic = rospy.get_frame('/navigans_path/robot_control_topic')
+    self.robotCmdTopic = rospy.get_param('/navigans_path/robot_control_topic')
     print self.someValue
     # self.someOtherValue = rospy.get_param('~modelFn')
 
@@ -97,8 +102,8 @@ class NaviGANsServer:
       except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
         continue
       
-      currentY = trans[0] # Front is positive
-      currentX = trans[1] # Left is positive
+      currentY = trans[1] # Front is positive
+      currentX = trans[0] # Left is positive
       heading = self.euler_from_quaternion(rot)[2]#in3.14, increase counterclockwise
       print( "Robot state: (%.3f, %.3f), < %.5f" % (currentX, currentY, heading) )
       
@@ -112,7 +117,7 @@ class NaviGANsServer:
       # print aGoal.orientation
       x_r     = aGoal.position.x
       y_r     = aGoal.position.y
-      theta_r = heading # self.tc.yawFromQuat( aGoal.orientation )
+      theta_r = self.tc.yawFromQuat( aGoal.orientation )
       x_c     = currentX
       y_c     = currentY
       theta_c = heading
@@ -131,11 +136,15 @@ class NaviGANsServer:
 
       cmd.angular.z = self.tc.w
       cmd.linear.x  = self.tc.v
+        
       self.husky_vel.publish(cmd)
       rate.sleep()
+
+      if self.tc.w == 0.0 and self.tc.v == 0.0 :
+        break
       
     # Publish feedback   
-    self.feedback.percent_complete = 0.0101
+    self.feedback.percent_complete = 1.0
      
     self.server.publish_feedback(self.feedback)
 
@@ -155,10 +164,10 @@ class NaviGANsServer:
 
 if __name__ == '__main__':
   rospy.init_node('navigans_control_server')
-  rospy.get_param('/navigans_path/tracking_topic')
+  trackerTopic = rospy.get_param('/navigans_path/tracking_topic')
 
   server = NaviGANsServer()
-  rospy.Subscriber( '/forward_lidar_tracking_data', TrackedObjectSet, server.trackerMsgCallback )
+  rospy.Subscriber( trackerTopic, TrackedObjectSet, server.trackerMsgCallback )
   rospy.spin()
 
 

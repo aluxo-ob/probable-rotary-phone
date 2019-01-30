@@ -5,15 +5,19 @@
 # --- Topic names
 /navigans_path/waypoint_topic:      '/move_base_simple/goal'
 /navigans_path/robot_control_topic: '/cmd_vel'
-/navigans_path/tracking_topic:      '/husky1_mover_detection/'
+/navigans_path/tracking_topic:      '/husky1_mover_detection'
 
 
 # --- Generate messages upon receiving waypoint data
 /navigans_path/debug_level:         1
 
 # --- Names of frames pulled from the TF broadcaster
-/navigans_path/target_frame:         '/husky1/odom'
-/navigans_path/source_frame:         '/husky1/base'
-/navigans_path/visual_frame:         '/velodyne'
+/navigans_path/target_frame:         '/odom'
+/navigans_path/source_frame:         '/base_link'
+/navigans_path/visual_frame:         '/odom'
+
+#/navigans_path/target_frame:         '/husky1/odom'
+#/navigans_path/source_frame:         '/husky1/base'
+#/navigans_path/visual_frame:         '/velodyne'
 
 /navigans_path/useGPU:                 1000

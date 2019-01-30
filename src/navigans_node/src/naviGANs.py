@@ -225,7 +225,8 @@ class Ui_Form( object ):
         p = listener.transformPoint("/husky1/odom", goalPoint)
         """
         data.header.stamp = rospy.Time(0)
-        odomData = listener.transformPose('/husky1/odom', data)
+        #odomData = listener.transformPose('/husky1/odom', data)
+        odomData = listener.transformPose(self.targetFrame, data)
         #print("( %.3f, %.3f, %.3f )" % (data.pose.position.x, data.pose.position.y, data.pose.position.z))        
         
         p = odomData.pose.position
