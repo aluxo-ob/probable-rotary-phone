@@ -62,12 +62,16 @@ class NaviGANsServer:
 
     # Read parameters from configuration file
     self.someValue = rospy.get_param('~useGPU', -1)
+    self.targetFrame = rospy.get_param('/navigans_path/target_frame')
+    self.sourceFrame = rospy.get_param('/navigans_path/source_frame')
+    self.robotCmdTopic = rospy.get_frame('/navigans_path/robot_control_topic')
     print self.someValue
     # self.someOtherValue = rospy.get_param('~modelFn')
 
     self.euler_from_quaternion = tf.transformations.euler_from_quaternion
     self.listener = tf.TransformListener()
-    self.husky_vel = rospy.Publisher('husky1/rcta_teleop/cmd_vel', Twist, queue_size=1)
+    #self.husky_vel = rospy.Publisher('husky1/rcta_teleop/cmd_vel', Twist, queue_size=1)
+    self.husky_vel = rospy.Publisher(self.robotCmdTopic, Twist, queue_size=1)
     self.tc = TrackingController()
     
   # --------------------------------------------------------
@@ -88,7 +92,8 @@ class NaviGANsServer:
     while not rospy.is_shutdown():
       rate = rospy.Rate(5.0) 
       try:
-        (trans,rot) = self.listener.lookupTransform('/husky1/odom', '/husky1/base', rospy.Time(0))
+        #(trans,rot) = self.listener.lookupTransform('/husky1/odom', '/husky1/base', rospy.Time(0))
+        (trans,rot) = self.listener.lookupTransform(self.targetFrame, self.sourceFrame, rospy.Time(0))
       except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
         continue
       

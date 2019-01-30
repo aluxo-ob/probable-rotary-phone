@@ -193,6 +193,8 @@ class Ui_Form( object ):
         self.goal.global_planning_use_poses = False
         self.goal.global_planning           = False
         self.goal.radius = []
+        self.visualFrame = rospy.get_param('/navigans_path/visual_frame')
+        self.targetFrame = rospy.get_param('/navigans_path/target_frame')
 
     def wayPointCallback( self, data ):
         print "Received waypoint from RViz"
@@ -200,7 +202,8 @@ class Ui_Form( object ):
         
         try:
             # lookupTransform(target_frame, source_frame, time) -> (position, quaternion)
-            (trans,rot) = listener.lookupTransform('/husky1/odom', '/velodyne', rospy.Time())
+            # (trans,rot) = listener.lookupTransform('/husky1/odom', '/velodyne', rospy.Time())
+            (trans,rot) = listener.lookupTransform(self.targetFrame, self.visualFrame, rospy.Time())
             msgTime = rospy.Time.from_sec( data.header.stamp.secs + data.header.stamp.nsecs/1e9 )
             #(trans,rot) = listener.lookupTransform('/husky1/odom', '/velodyne', msgTime )
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
