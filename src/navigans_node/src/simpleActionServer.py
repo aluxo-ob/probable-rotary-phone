@@ -20,11 +20,23 @@ class TrackingController:
     self.K_y = 0.5
     self.K_theta = 0.25        
     self.active = False
+    self.k0 = 1.0
+    self.k1 = 1.0
+    self.k2 = 1.0
     print "[INFO] Tracking Controller has been instantiated."
 
   # --------------------------------------------------------
   def setActive(self, state):
     self.active = state
+
+  # --------------------------------------------------------
+  def sgn(self, x):
+    if x == 0.0:
+      return 0.0
+    elif x < 0.0:
+      return -1.0
+    else:
+      return 1.0
     
   # --------------------------------------------------------
   def computeCommand(self, x_r, y_r, theta_r, x_c, y_c, theta_c, v_r, w_r):
@@ -40,6 +52,51 @@ class TrackingController:
     if m.fabs(error_x) <= 0.5 and m.fabs(error_y) <= 0.5 :
       self.v = 0.0
       self.w = 0.0
+
+  # --------------------------------------------------------
+  def computeCommandSMC(self, x_r, y_r, theta_r, v_r, w_r, x_d, y_d, theta_d, v_d, w_d, ):
+    error_x = x_r - x_d
+    error_y = y_r - y_d
+    x_e     = m.cos( theta_d ) * error_x + m.sin( theta_d ) * error_y
+    y_e     = m.cos( theta_d ) * error_y - m.sin( theta_d ) * error_x
+    theta_e = theta_r - theta_d
+    # Sliding surface
+    s1 = -v_d + v_r * m.cos( theta_e ) + y_e * w_d + self.k1 * x_e
+    s2 = v_r * m.sin( theta_e ) - x_e * w_d + self.k2 * y_e + self.k0 * self.sgn( y_e ) * theta_e
+    # Compute reaching law terms
+    q1 = 1.0
+    q2 = 1.0
+    p1 = 1.0
+    p2 = 1.0
+    r1 = q1 * s1 + p1 * self.sgn( s1 )
+    r2 = q2 * s2 + p2 * self.sgn( s2 )
+    R  = np.array( [ (-r1,), (-r2,) ] )
+    # Compute individual terms of Jacobian matrix
+    j11 = self.k1 * m.cos( theta_e ) + w_d * m.sin( theta_e )
+    j12 = - v_r * m.sin( theta_e )
+    j21 = - w_d * m.cos( theta_e ) + m.sin( theta_e ) * (self.k2 + self.k0 * self.sgn( y_e ) * theta_e )
+    j22 = v_r * m.cos( theta_e ) + self.k0 * self.sgn( y_e )
+    # Compute the inverse of the Jacobian matrix
+    J = np.array( [ (j11, j12), (j21, j22) ] )
+    try:
+      Jinv = np.linalg.inv( J )
+    except np.linalg.LinAlgError:
+      # Not invertible. Skip this one.
+      pass
+    else:
+      # continue with what you were doing
+      print "Jinv ok"
+
+    # Compute control commands
+    u = np.matmul( Jinv, R )
+    
+    self.v = u[0]
+    self.w = u[1]
+
+    # Terminate if close to goal
+    if m.fabs(error_x) <= 0.5 and m.fabs(error_y) <= 0.5 :
+      self.v = 0.0
+      self.w = 0.0   
     
   # --------------------------------------------------------
   def yawFromQuat(self, quat):
@@ -123,7 +180,10 @@ class NaviGANsServer:
       theta_c = heading
       v_r     = 0.95
       w_r     = 0.0
-      self.tc.computeCommand( x_r, y_r, theta_r, x_c, y_c, theta_c, v_r, w_r )
+      # Per Kanayama et al. r = reference; c = current
+      #self.tc.computeCommand( x_r, y_r, theta_r, x_c, y_c, theta_c, v_r, w_r )
+      #computeCommandSMC(self, x_r, y_r, theta_r, v_r, w_r, x_d, y_d, theta_d, v_d, w_d, )
+      self.tc.computeCommandSMC( x_r, y_r, theta_r, v_r, w_r, x_c, y_c, theta_c, v_r, w_r )
       print( "Robot goal: (%.3f, %.3f), < %.5f" % (x_r, y_r, theta_r) )
       print("Cmd: [%.3f, %.4f]" % (self.tc.v, self.tc.w) )
       print "."      
