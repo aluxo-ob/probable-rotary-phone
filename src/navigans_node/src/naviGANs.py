@@ -249,7 +249,7 @@ class Ui_Form( object ):
         
         aPoseStamped.header.stamp.secs  = now.secs
         aPoseStamped.header.stamp.nsecs = now.nsecs
-        aPoseStamped.header.frame_id = 'odom'
+        aPoseStamped.header.frame_id = self.targetFrame
         self.goal.desired_path.poses.append( aPoseStamped )
         """
         newData = np.array( [data.pose.position.x, data.pose.position.y, data.pose.position.z] )
