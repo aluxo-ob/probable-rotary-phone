@@ -40,6 +40,7 @@ class TrackingController:
     
   # --------------------------------------------------------
   def computeCommand(self, x_r, y_r, theta_r, x_c, y_c, theta_c, v_r, w_r):
+    # Kanayama defines the error as "reference - current"
     error_x = x_r - x_c
     error_y = y_r - y_c
     x_e     = m.cos( theta_c ) * error_x + m.sin( theta_c ) * error_y
@@ -55,6 +56,7 @@ class TrackingController:
 
   # --------------------------------------------------------
   def computeCommandSMC(self, x_r, y_r, theta_r, v_r, w_r, x_d, y_d, theta_d, v_d, w_d, ):
+    # Solea defines the error as "current - desired(reference)"
     error_x = x_r - x_d
     error_y = y_r - y_d
     x_e     = m.cos( theta_d ) * error_x + m.sin( theta_d ) * error_y
