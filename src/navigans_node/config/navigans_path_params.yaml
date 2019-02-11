@@ -6,6 +6,7 @@
 /navigans_path/waypoint_topic:      '/move_base_simple/goal'
 /navigans_path/robot_control_topic: '/cmd_vel'
 /navigans_path/tracking_topic:      '/husky1_mover_detection'
+/navigans_path/poses_list_topic:    '/husky1_nav_poses'
 
 
 # --- Generate messages upon receiving waypoint data
@@ -19,5 +20,6 @@
 /navigans_path/target_frame:         '/husky1/odom'
 /navigans_path/source_frame:         '/husky1/base'
 /navigans_path/visual_frame:         '/husky1/odom'
+#/navigans_path/visual_frame:         '/velodyne'
 
 /navigans_path/useGPU:                 1000

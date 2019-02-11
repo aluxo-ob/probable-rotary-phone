@@ -154,6 +154,10 @@ class Ui_Form( object ):
 
         # Fill in the goal here
         self.client.send_goal( self.goal )
+
+        # Publish list as a simple topic, not action-related
+        self.goalsListPub.publish(self.goalsList)
+
         if self.client.wait_for_result( rospy.Duration.from_sec(2.0) ):
             self.client.get_result()
             self.updateLog("Goal has been sent")
@@ -200,6 +204,9 @@ class Ui_Form( object ):
         self.goal.desired_path.poses = []
         self.visualFrame = rospy.get_param('/navigans_path/visual_frame')
         self.targetFrame = rospy.get_param('/navigans_path/target_frame')
+        self.posesListTopic = rospy.get_param('/navigans_path/poses_list_topic')
+        self.goalsList      = Path()
+        self.goalsListPub   = rospy.Publisher(self.posesListTopic, Path, queue_size=1)
 
     def wayPointCallback( self, data ):
         print "Received waypoint from RViz"
@@ -251,6 +258,7 @@ class Ui_Form( object ):
         aPoseStamped.header.stamp.nsecs = now.nsecs
         aPoseStamped.header.frame_id = self.targetFrame
         self.goal.desired_path.poses.append( aPoseStamped )
+        self.goalsList.poses.append( aPoseStamped )
         """
         newData = np.array( [data.pose.position.x, data.pose.position.y, data.pose.position.z] )
         if self.waypointCount == 0:
